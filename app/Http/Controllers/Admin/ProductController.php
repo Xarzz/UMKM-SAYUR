@@ -31,9 +31,9 @@ class ProductController extends Controller
             'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        // Upload image
-        $imagePath = $request->file('image')->store('products', 'public');
-        $imageUrl = asset('storage/' . $imagePath);
+        // Upload image to Supabase Storage
+        $imagePath = $request->file('image')->store('products', 'supabase');
+        $imageUrl = \Illuminate\Support\Facades\Storage::disk('supabase')->url($imagePath);
 
         Product::create([
             'name' => $request->name,
@@ -70,8 +70,8 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
-            $imageUrl = asset('storage/' . $imagePath);
+            $imagePath = $request->file('image')->store('products', 'supabase');
+            $imageUrl = \Illuminate\Support\Facades\Storage::disk('supabase')->url($imagePath);
             $product->images = [$imageUrl];
         }
 
