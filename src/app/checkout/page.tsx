@@ -69,7 +69,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     
     // WhatsApp logic as in the original project
-    let message = `*PESANAN BARU - SAYUR UMKM*%0A%0A`;
+    let message = `*PESANAN BARU - WARUNG SAYUR SEGAR MALANG*%0A%0A`;
     message += `*Data Penerima:*%0A`;
     message += `- Nama: ${formData.customer_name}%0A`;
     message += `- Email: ${formData.customer_email}%0A`;

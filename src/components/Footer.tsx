@@ -11,8 +11,8 @@ export default function Footer() {
               <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center">
                 <Leaf className="w-6 h-6" />
               </div>
-              <span className="font-bold text-xl tracking-tight text-white">
-                Sayur <span className="text-emerald-400">UMKM</span>
+              <span className="font-bold text-lg sm:text-xl tracking-tight text-white">
+                Warung Sayur <span className="text-emerald-400">Segar Malang</span>
               </span>
             </div>
             <p className="text-emerald-200/80 text-sm mb-6 leading-relaxed">
@@ -46,7 +46,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-emerald-800/50 pt-8 text-center text-sm text-emerald-200/60">
-          &copy; {new Date().getFullYear()} Sayur UMKM. All rights reserved.
+          &copy; {new Date().getFullYear()} Warung Sayur Segar Malang. All rights reserved.
         </div>
       </div>
     </footer>

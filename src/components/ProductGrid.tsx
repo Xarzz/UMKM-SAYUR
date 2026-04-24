@@ -57,18 +57,20 @@ export default function ProductGrid({ products }: { products: Product[] }) {
             } rounded-3xl p-4 shadow-sm border group hover:shadow-xl transition-all duration-300`}
           >
             <div className="relative rounded-2xl overflow-hidden mb-4 bg-gray-100 dark:bg-gray-900 aspect-square">
-              {product.is_new && (
-                <span className="absolute top-3 left-3 z-10 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Baru Datang</span>
-              )}
-              {product.is_fresh && !product.is_new && (
-                <span className="absolute top-3 left-3 z-10 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Dipanen Hari Ini</span>
-              )}
-              {product.limited_stock && !product.is_new && !product.is_fresh && (
-                <span className="absolute top-3 left-3 z-10 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm text-gray-900">Stok Terbatas</span>
-              )}
-              {product.discount_percentage && product.discount_percentage > 0 && (
-                <span className="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Diskon {product.discount_percentage}%</span>
-              )}
+              <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[80%]">
+                {product.is_new && (
+                  <span className="bg-blue-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Baru Datang</span>
+                )}
+                {product.is_fresh && (
+                  <span className="bg-emerald-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Dipanen Hari Ini</span>
+                )}
+                {product.limited_stock && (
+                  <span className="bg-yellow-400 text-yellow-900 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Stok Terbatas</span>
+                )}
+                {product.discount_percentage && product.discount_percentage > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Diskon {product.discount_percentage}%</span>
+                )}
+              </div>
               
               <img 
                 src={firstImage} 

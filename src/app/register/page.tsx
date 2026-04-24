@@ -72,7 +72,7 @@ export default function RegisterPage() {
           </div>
 
           <p className="text-[10px] text-gray-500 dark:text-gray-400 px-1 leading-tight">
-            Dengan mendaftar, Anda menyetujui Syarat & Ketentuan serta Kebijakan Privasi Sayur UMKM.
+            Dengan mendaftar, Anda menyetujui Syarat & Ketentuan serta Kebijakan Privasi Warung Sayur Segar Malang.
           </p>
 
           <button 

@@ -70,8 +70,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="w-8 h-8 bg-emerald-500 text-white rounded-lg flex items-center justify-center">
               <Leaf className="w-5 h-5" />
             </div>
-            <span className="font-bold text-xl text-emerald-900 dark:text-white">
-              Sayur <span className="text-emerald-500">UMKM</span>
+            <span className="font-bold text-lg sm:text-xl text-emerald-900 dark:text-white">
+              Warung Sayur <span className="text-emerald-500">Segar Malang</span>
             </span>
           </Link>
         </div>

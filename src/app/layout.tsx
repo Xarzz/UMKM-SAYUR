@@ -15,7 +15,7 @@ const outfit = Outfit({
 import MainLayout from "../components/MainLayout";
 
 export const metadata: Metadata = {
-  title: "Sayur UMKM - Segar dari Petani",
+  title: "Warung Sayur Segar Malang - Segar dari Petani",
   description: "Sayuran segar bebas pestisida langsung dari petani lokal.",
 };
 
