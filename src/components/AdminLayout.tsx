@@ -66,13 +66,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       `}>
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg overflow-hidden">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md border border-gray-100 dark:border-gray-700 transition-transform group-hover:scale-105">
               <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-lg sm:text-xl text-emerald-900 dark:text-white">
-              Warung Sayur <span className="text-emerald-500">Segar Malang</span>
-            </span>
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Warung Sayur</span>
+              <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Segar Malang</span>
+            </div>
           </Link>
         </div>
 
