@@ -119,9 +119,10 @@ export default function AdminProducts() {
   const getFirstImage = (imagesStr: string) => {
     try {
       const images = JSON.parse(imagesStr);
-      return Array.isArray(images) ? images[0] : images;
+      const img = Array.isArray(images) ? images[0] : images;
+      return img || null;
     } catch {
-      return "";
+      return null;
     }
   };
 
@@ -132,15 +133,12 @@ export default function AdminProducts() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Kelola Produk</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">{products.length} produk terdaftar</p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manajemen Katalog Produk</h1>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all text-sm"
         >
-          <Plus className="w-4 h-4" /> Tambah Produk
+          <Plus className="w-4 h-4" /> Tambah Produk Baru
         </button>
       </div>
 
@@ -163,62 +161,67 @@ export default function AdminProducts() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Daftar Produk</h2>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-gray-800/50 text-left">
-                  <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Produk</th>
-                  <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Kategori</th>
-                  <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Harga</th>
-                  <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
-                  <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300 text-right">Aksi</th>
+            <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+              <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold">
+                <tr>
+                  <th className="px-6 py-4">Foto</th>
+                  <th className="px-6 py-4">Nama Produk</th>
+                  <th className="px-6 py-4">Kategori</th>
+                  <th className="px-6 py-4">Harga</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filtered.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                      {getFirstImage(product.images) ? (
                         <img
-                          src={getFirstImage(product.images)}
+                          src={getFirstImage(product.images) || undefined}
                           alt={product.name}
-                          className="w-10 h-10 rounded-lg object-cover border border-gray-100 dark:border-gray-700"
+                          className="w-12 h-12 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
                         />
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{product.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{product.weight_label}</p>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                          <ImageIcon className="w-5 h-5 text-gray-400" />
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg">
-                        {product.category?.name || "-"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                      {formatRupiah(product.price)}
-                      {product.discount_percentage > 0 && (
-                        <span className="ml-2 text-xs text-red-500">-{product.discount_percentage}%</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex gap-1 flex-wrap">
-                        {product.is_fresh && <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded-md">Segar</span>}
-                        {product.is_new && <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-medium rounded-md">Baru</span>}
-                        {product.limited_stock && <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium rounded-md">Terbatas</span>}
-                      </div>
+                      <p className="font-bold text-gray-900 dark:text-white">{product.name}</p>
+                      <p className="text-xs text-gray-500">{product.weight_label}</p>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-6 py-4">
+                      {product.category?.name || "-"}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                      Rp {new Intl.NumberFormat("id-ID").format(product.price)}
+                    </td>
+                    <td className="px-6 py-4">
+                      {product.is_new ? (
+                        <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">Baru</span>
+                      ) : product.is_fresh ? (
+                        <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded-full">Segar</span>
+                      ) : (
+                        <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">Biasa</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => openEdit(product)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
