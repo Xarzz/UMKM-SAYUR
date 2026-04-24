@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -15,7 +16,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <CartProvider>
-      {!isAuthPage && <Navbar />}
+      {!isAuthPage && (
+        <Suspense fallback={null}>
+          <Navbar />
+        </Suspense>
+      )}
       <main className={`${!isAuthPage ? "pt-16" : ""} min-h-screen`}>
         {children}
       </main>
