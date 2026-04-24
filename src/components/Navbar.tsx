@@ -87,8 +87,8 @@ export default function Navbar() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <Leaf className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-emerald-500/20">
+                  <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-cover" />
                 </div>
                 <span className="font-bold text-lg sm:text-xl tracking-tight text-emerald-900 dark:text-white">
                   Warung Sayur <span className="text-emerald-500">Segar Malang</span>
