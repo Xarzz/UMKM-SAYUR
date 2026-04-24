@@ -67,7 +67,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
                 {product.limited_stock && (
                   <span className="bg-yellow-400 text-yellow-900 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Stok Terbatas</span>
                 )}
-                {product.discount_percentage && product.discount_percentage > 0 && (
+                {product.discount_percentage !== undefined && product.discount_percentage > 0 && (
                   <span className="bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-sm">Diskon {product.discount_percentage}%</span>
                 )}
               </div>
@@ -94,7 +94,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{product.weight_label}</p>
               </div>
-              {product.rating && (
+              {product.rating !== undefined && product.rating > 0 && (
                 <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 rounded-lg">
                   <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                   <span className="text-xs font-bold text-yellow-700 dark:text-yellow-400">{product.rating}</span>
