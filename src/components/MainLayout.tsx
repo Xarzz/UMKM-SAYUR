@@ -13,19 +13,21 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   
   // List of paths where we DON'T want Navbar/Footer/WhatsApp
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAdminPage = pathname.startsWith("/admin");
+  const hideChrome = isAuthPage || isAdminPage;
 
   return (
     <CartProvider>
-      {!isAuthPage && (
+      {!hideChrome && (
         <Suspense fallback={null}>
           <Navbar />
         </Suspense>
       )}
-      <main className={`${!isAuthPage ? "pt-16" : ""} min-h-screen`}>
+      <main className={`${!hideChrome ? "pt-16" : ""} min-h-screen`}>
         {children}
       </main>
-      {!isAuthPage && <Footer />}
-      {!isAuthPage && <WhatsAppButton />}
+      {!hideChrome && <Footer />}
+      {!hideChrome && <WhatsAppButton />}
       <Toast />
     </CartProvider>
   );
