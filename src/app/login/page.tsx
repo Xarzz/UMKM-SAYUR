@@ -5,28 +5,42 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Leaf, Mail, Lock, ArrowRight, User } from "lucide-react";
 
+import { supabase } from "@/lib/supabase";
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
 
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
-    // Simulasi Login: Simpan data ke localStorage agar Navbar bisa baca
-    const userData = {
-      name: "Muhammad Uhib",
-      email: "muhammaduhib@example.com"
-    };
-    localStorage.setItem("user", JSON.stringify(userData));
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    setTimeout(() => {
-      setLoading(false);
+      if (error) throw error;
+      
       router.push(redirect);
-    }, 1000);
+      // Wait a bit for auth state to propagate then refresh
+      setTimeout(() => {
+        router.refresh();
+      }, 500);
+    } catch (err: any) {
+      console.error("Full Login Error:", err);
+      setError(err.message || "Invalid login credentials. Please check your email and password.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,12 +48,18 @@ function LoginForm() {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl shadow-emerald-500/10 p-6 md:p-8 border border-white dark:border-gray-700">
         
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/30 mb-4">
-            <Leaf className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
+            <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Selamat Datang</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Masuk untuk mulai belanja sayur segar</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-xs font-medium animate-shake">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -48,6 +68,8 @@ function LoginForm() {
               <input 
                 type="email" 
                 required 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-gray-50 dark:bg-gray-700 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-emerald-500 dark:text-white transition-all text-sm"
                 placeholder="nama@email.com"
               />
@@ -61,6 +83,8 @@ function LoginForm() {
               <input 
                 type="password" 
                 required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-gray-50 dark:bg-gray-700 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-emerald-500 dark:text-white transition-all text-sm"
                 placeholder="••••••••"
               />

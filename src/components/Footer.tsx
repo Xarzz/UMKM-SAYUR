@@ -8,8 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl overflow-hidden">
-                <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-cover" />
+              <div className="w-12 h-12 shrink-0">
+                <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-bold text-lg sm:text-xl tracking-tight text-white">
                 Warung Sayur <span className="text-emerald-400">Segar Malang</span>

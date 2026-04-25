@@ -7,6 +7,7 @@ import Footer from "./Footer";
 import WhatsAppButton from "./WhatsAppButton";
 import Toast from "./Toast";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,18 +18,20 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const hideChrome = isAuthPage || isAdminPage;
 
   return (
-    <CartProvider>
-      {!hideChrome && (
-        <Suspense fallback={null}>
-          <Navbar />
-        </Suspense>
-      )}
-      <main className={`${!hideChrome ? "pt-16" : ""} min-h-screen`}>
-        {children}
-      </main>
-      {!hideChrome && <Footer />}
-      {!hideChrome && <WhatsAppButton />}
-      <Toast />
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        {!hideChrome && (
+          <Suspense fallback={null}>
+            <Navbar />
+          </Suspense>
+        )}
+        <main className={`${!hideChrome ? "pt-16" : ""} min-h-screen`}>
+          {children}
+        </main>
+        {!hideChrome && <Footer />}
+        {!hideChrome && <WhatsAppButton />}
+        <Toast />
+      </CartProvider>
+    </AuthProvider>
   );
 }

@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Box, Tags, ShoppingCart, LogOut, 
   Leaf, Menu, X, Moon, Sun
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -17,8 +18,28 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (!loading && profile?.role !== "admin") {
+      router.push("/login?redirect=" + pathname);
+    }
+  }, [profile, loading, router, pathname]);
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-emerald-600">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-current"></div>
+      </div>
+    );
+  }
+
+  if (profile?.role !== "admin") {
+    return null;
+  }
 
   useEffect(() => {
     const dark = document.documentElement.classList.contains("dark");
@@ -66,13 +87,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       `}>
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md border border-gray-100 dark:border-gray-700 transition-transform group-hover:scale-105">
-              <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-cover" />
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 shrink-0">
+              <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
-            <div className="flex flex-col leading-none">
-              <span className="font-bold text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Warung Sayur</span>
-              <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Segar Malang</span>
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-sm text-emerald-900 dark:text-white">Warung Sayur</span>
+              <span className="font-extrabold text-lg text-emerald-500 dark:text-emerald-400">Segar Malang</span>
             </div>
           </Link>
         </div>

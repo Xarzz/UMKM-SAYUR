@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Leaf, Search, Moon, Sun, ShoppingCart, ChevronDown, LogOut, LogIn, UserPlus, X, Trash2, ArrowRight } from "lucide-react";
+import { Leaf, Search, Moon, Sun, ShoppingCart, ChevronDown, LogOut, LogIn, UserPlus, X, Trash2, ArrowRight, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const router = useRouter();
@@ -16,9 +17,7 @@ export default function Navbar() {
   
   const { cartItems, totalItems, cartTotal, incrementQty, decrementQty, removeFromCart } = useCart();
   
-  // Real auth state will come from Supabase later
-  const [user, setUser] = useState<any>(null); 
-
+  const { user, profile, signOut } = useAuth();
   // Sync search input with URL search param
   useEffect(() => {
     const urlSearch = currentSearchParams.get("search") || "";
@@ -26,13 +25,7 @@ export default function Navbar() {
   }, [currentSearchParams]);
 
   useEffect(() => {
-    // 1. Sync User dari localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-
-    // 2. Theme initialization
+    // Theme initialization
     const isDark = localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setIsDarkMode(isDark);
     if (isDark) {
@@ -87,8 +80,8 @@ export default function Navbar() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-emerald-500/20">
-                  <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-cover" />
+                <div className="w-12 h-12 shrink-0">
+                  <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <span className="font-bold text-lg sm:text-xl tracking-tight text-emerald-900 dark:text-white">
                   Warung Sayur <span className="text-emerald-500">Segar Malang</span>
@@ -128,7 +121,7 @@ export default function Navbar() {
               <div className="relative ml-2">
                 <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 focus:outline-none">
                   <img 
-                    src={user ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=10b981&color=fff` : "https://ui-avatars.com/api/?name=Guest&background=e2e8f0&color=475569"} 
+                    src={user ? `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || user.email || "User")}&background=10b981&color=fff` : "https://ui-avatars.com/api/?name=Guest&background=e2e8f0&color=475569"} 
                     alt="Profile" 
                     className="w-9 h-9 rounded-full border-2 border-transparent hover:border-emerald-500 transition-all" 
                   />
@@ -142,17 +135,35 @@ export default function Navbar() {
                       {user ? (
                         <>
                           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Akun Saya</p>
+                            <p className="text-sm font-bold truncate text-gray-900 dark:text-white mt-0.5">{profile?.full_name || user.email}</p>
                           </div>
+                          
+                          {profile?.role === "admin" && (
+                            <Link 
+                              href="/admin" 
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              <LayoutDashboard className="w-4 h-4 mr-3" />Dashboard Admin
+                            </Link>
+                          )}
+
+                          <Link 
+                            href="/history" 
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-3" />Riwayat Pembelian
+                          </Link>
+
                           <button 
-                            onClick={() => {
-                              localStorage.removeItem("user");
-                              setUser(null);
+                            onClick={async () => {
+                              await signOut();
                               setProfileOpen(false);
                               router.push("/");
                             }}
-                            className="w-full flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="w-full border-t border-gray-100 dark:border-gray-700 flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           >
                             <LogOut className="w-4 h-4 mr-3" />Keluar
                           </button>
