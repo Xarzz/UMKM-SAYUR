@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { List, Banknote, Tag, Truck, ChevronDown, SlidersHorizontal } from "lucide-react";
 
@@ -17,6 +17,7 @@ interface FilterSidebarProps {
 export default function FilterSidebar({ categories, searchParams }: FilterSidebarProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   
   // State for real-time price display
   const [maxPrice, setMaxPrice] = useState(searchParams.max_price || 200000);
@@ -37,7 +38,14 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
     }
     
     const queryString = params.toString();
-    router.push(queryString ? `/?${queryString}#produk` : "/#produk", { scroll: false });
+    startTransition(() => {
+      router.push(queryString ? `/?${queryString}#produk` : "/#produk", { scroll: false });
+    });
+    
+    // Tutup sidebar di mobile setelah memilih filter
+    if (window.innerWidth < 1024) {
+      setIsOpen(false);
+    }
   };
 
   // Debounce for range input

@@ -191,8 +191,8 @@ export default function Navbar() {
       {cartOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity" onClick={() => setCartOpen(false)}></div>
-          <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-            <div className="w-screen max-w-md bg-white dark:bg-gray-800 shadow-xl flex flex-col pointer-events-auto h-full">
+          <div className="fixed inset-y-0 right-0 flex w-full md:pl-10">
+            <div className="w-full md:w-screen md:max-w-md bg-white dark:bg-gray-800 shadow-xl flex flex-col pointer-events-auto h-full">
               <div className="flex items-center justify-between px-4 py-6 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Keranjang Belanja</h2>
                 <button onClick={() => setCartOpen(false)} className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
