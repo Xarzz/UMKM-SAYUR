@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, MapPin, Truck, Wallet, CheckCircle, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, cartTotal, totalItems } = useCart();
   
-  // Placeholder user state, should be replaced with real auth check
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading: authLoading } = useAuth();
+  const [pageLoading, setPageLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -23,28 +23,23 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    // Cek User dari localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
+    // Tunggu sampai auth Supabase selesai loading
+    if (authLoading) return;
+
+    if (user) {
       setFormData(prev => ({
         ...prev,
-        customer_name: userData.name,
-        customer_email: userData.email
+        customer_name: profile?.full_name || user.user_metadata?.full_name || "",
+        customer_email: user.email || ""
       }));
+      setPageLoading(false);
     } else {
-      // Redirect ke login jika paksa
+      // Redirect ke login jika belum login
       router.push("/login?redirect=/checkout");
     }
-    
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [router]);
+  }, [user, profile, authLoading, router]);
 
-  if (loading) return (
+  if (authLoading || pageLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
     </div>
