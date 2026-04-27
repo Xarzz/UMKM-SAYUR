@@ -12,7 +12,6 @@ export default function CheckoutPage() {
   const { cartItems, cartTotal, totalItems } = useCart();
   
   const { user, profile, loading: authLoading } = useAuth();
-  const [pageLoading, setPageLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -23,27 +22,24 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    // Tunggu sampai auth Supabase selesai loading
-    if (authLoading) return;
-
-    if (user) {
+    if (!authLoading && !user) {
+      router.push("/login?redirect=/checkout");
+    } else if (user) {
       setFormData(prev => ({
         ...prev,
         customer_name: profile?.full_name || user.user_metadata?.full_name || "",
         customer_email: user.email || ""
       }));
-      setPageLoading(false);
-    } else {
-      // Redirect ke login jika belum login
-      router.push("/login?redirect=/checkout");
     }
   }, [user, profile, authLoading, router]);
 
-  if (authLoading || pageLoading) return (
+  if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
     </div>
   );
+
+  if (!user) return null; // Cegah render halaman sebelum redirect selesai
 
   const grandTotal = cartTotal;
 
