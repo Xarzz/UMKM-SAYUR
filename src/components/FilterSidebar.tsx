@@ -19,16 +19,31 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   
-  // State for real-time price display
   const [maxPrice, setMaxPrice] = useState(searchParams.max_price || 200000);
+  const [localCategory, setLocalCategory] = useState(searchParams.category || "");
+  const [localIsFresh, setLocalIsFresh] = useState(!!searchParams.is_fresh);
+  const [localIsPromo, setLocalIsPromo] = useState(!!searchParams.is_promo);
 
-  // Sync maxPrice with searchParams
+  // Sync state with searchParams
   useEffect(() => {
     setMaxPrice(searchParams.max_price || 200000);
-  }, [searchParams.max_price]);
+    setLocalCategory(searchParams.category || "");
+    setLocalIsFresh(!!searchParams.is_fresh);
+    setLocalIsPromo(!!searchParams.is_promo);
+  }, [searchParams]);
 
   // Unified handler for all filters
   const handleFilterChange = (name: string, value: string | boolean) => {
+    // Trigger skeleton loading di ProductGrid
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("filterStart"));
+    }
+
+    // Optimistic UI update
+    if (name === "category") setLocalCategory(value as string);
+    if (name === "is_fresh") setLocalIsFresh(value as boolean);
+    if (name === "is_promo") setLocalIsPromo(value as boolean);
+
     const params = new URLSearchParams(window.location.search);
     
     if (value === "" || value === false || value === undefined) {
@@ -83,7 +98,7 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
               <input 
                 type="radio" 
                 name="category_filter" 
-                checked={!searchParams.category} 
+                checked={localCategory === ""} 
                 onChange={() => handleFilterChange("category", "")}
                 className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 cursor-pointer" 
               />
@@ -94,7 +109,7 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
                 <input 
                   type="radio" 
                   name="category_filter" 
-                  checked={String(searchParams.category) === String(cat.id)} 
+                  checked={String(localCategory) === String(cat.id)} 
                   onChange={() => handleFilterChange("category", cat.id.toString())}
                   className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 cursor-pointer" 
                 />
@@ -137,7 +152,7 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
             <label className="flex items-center gap-3 cursor-pointer group">
               <input 
                 type="checkbox" 
-                checked={!!searchParams.is_fresh} 
+                checked={localIsFresh} 
                 onChange={(e) => handleFilterChange("is_fresh", e.target.checked)}
                 className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer" 
               />
@@ -146,7 +161,7 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
             <label className="flex items-center gap-3 cursor-pointer group">
               <input 
                 type="checkbox" 
-                checked={!!searchParams.is_promo} 
+                checked={localIsPromo} 
                 onChange={(e) => handleFilterChange("is_promo", e.target.checked)}
                 className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer" 
               />

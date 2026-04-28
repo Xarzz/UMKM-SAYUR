@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Plus, Star, ChefHat } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
@@ -20,6 +21,19 @@ interface Product {
 
 export default function ProductGrid({ products }: { products: Product[] }) {
   const { addToCart } = useCart();
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  // Matikan skeleton saat data produk baru masuk
+  useEffect(() => {
+    setIsFiltering(false);
+  }, [products]);
+
+  // Dengarkan event dari FilterSidebar
+  useEffect(() => {
+    const handleFilterStart = () => setIsFiltering(true);
+    window.addEventListener("filterStart", handleFilterStart);
+    return () => window.removeEventListener("filterStart", handleFilterStart);
+  }, []);
 
   const getFirstImage = (imagesStr: string) => {
     try {
@@ -37,6 +51,24 @@ export default function ProductGrid({ products }: { products: Product[] }) {
       minimumFractionDigits: 0,
     }).format(number);
   };
+
+  if (isFiltering) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+            <div className="rounded-2xl bg-gray-200 dark:bg-gray-700 aspect-square mb-4"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-1/2 mb-4"></div>
+            <div className="flex justify-between items-center mt-4">
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-full w-1/3"></div>
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

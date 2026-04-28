@@ -1,4 +1,5 @@
 import { Zap } from "lucide-react";
+import Link from "next/link";
 
 export default function PromoBanner() {
   return (
@@ -17,9 +18,12 @@ export default function PromoBanner() {
               <p className="text-emerald-100 mb-8 text-lg">
                 Dapatkan paket sayur sop dan aneka jamur dengan potongan harga hingga 40%. Stok terbatas setiap harinya.
               </p>
-              <button className="bg-white text-emerald-800 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors shadow-lg">
+              <Link 
+                href="/?is_promo=true#produk"
+                className="inline-block bg-white text-emerald-800 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors shadow-lg text-center"
+              >
                 Cek Promo
-              </button>
+              </Link>
             </div>
             <div className="h-full hidden md:block">
               <img

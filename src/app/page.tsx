@@ -24,7 +24,20 @@ export default async function Home({
 
   try {
     const { data: catData } = await supabase.from("categories").select("*");
-    categories = catData || [];
+    const { data: prodsCount } = await supabase.from("products").select("category_id");
+    
+    // Count products per category
+    const counts: Record<number, number> = {};
+    (prodsCount || []).forEach((p: any) => {
+      if (p.category_id) {
+        counts[p.category_id] = (counts[p.category_id] || 0) + 1;
+      }
+    });
+
+    categories = (catData || []).map(cat => ({
+      ...cat,
+      count: counts[cat.id] || 0
+    }));
 
     let query = supabase.from("products").select("*, category:categories(*)");
 
@@ -49,8 +62,8 @@ export default async function Home({
       {/* Hero Section */}
       <section className="relative pt-20 pb-24 lg:pt-32 lg:pb-40 overflow-hidden bg-emerald-50 dark:bg-gray-900 transition-colors duration-300">
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] rounded-full bg-emerald-200/50 dark:bg-emerald-900/20 blur-3xl opacity-50 mix-blend-multiply dark:mix-blend-lighten transition-colors"></div>
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] rounded-full bg-yellow-200/50 dark:bg-yellow-900/10 blur-3xl opacity-50 mix-blend-multiply dark:mix-blend-lighten transition-colors"></div>
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 lg:-mr-20 lg:-mt-20 w-[300px] h-[300px] lg:w-[600px] lg:h-[600px] rounded-full bg-emerald-200/50 dark:bg-emerald-900/30 blur-3xl opacity-50 mix-blend-multiply dark:mix-blend-lighten transition-colors"></div>
+          <div className="absolute bottom-0 left-0 -ml-10 -mb-10 lg:-ml-20 lg:-mb-20 w-[250px] h-[250px] lg:w-[500px] lg:h-[500px] rounded-full bg-yellow-200/50 dark:bg-yellow-900/20 blur-3xl opacity-50 mix-blend-multiply dark:mix-blend-lighten transition-colors"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -112,7 +125,7 @@ export default async function Home({
         </div>
       </section>
 
-      <CategoryGrid />
+      <CategoryGrid categories={categories} />
       <PromoBanner />
 
       {/* Main Product Section */}
