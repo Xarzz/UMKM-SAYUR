@@ -119,15 +119,14 @@ export default function Navbar() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full relative z-10">
           <div className="flex justify-between items-center h-full">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-12 h-12 shrink-0">
+            <div className="flex items-center min-w-0 flex-1">
+              <Link href="/" className="flex items-center gap-2 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0">
                   <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <div className="flex flex-col sm:flex-row sm:gap-1 leading-tight sm:leading-normal">
-                  <span className="font-bold text-base sm:text-xl tracking-tight text-emerald-900 dark:text-white">Warung Sayur</span>
-                  <span className="font-bold text-sm sm:text-xl tracking-tight text-emerald-500">Segar Malang</span>
-                </div>
+                <span className="font-bold text-base sm:text-xl tracking-tight text-emerald-900 dark:text-white truncate">
+                  Warung Sayur <span className="text-emerald-500">Segar Malang</span>
+                </span>
               </Link>
             </div>
             
@@ -231,7 +230,7 @@ export default function Navbar() {
         <div className="fixed inset-0 z-[100] overflow-hidden">
           <div className="absolute inset-0 bg-gray-900/60 dark:bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-500" onClick={() => setCartOpen(false)}></div>
           <div className="fixed inset-y-0 right-0 flex max-w-full">
-            <div className="w-[90vw] sm:w-[450px] bg-white dark:bg-gray-800 shadow-2xl flex flex-col pointer-events-auto h-full animate-in slide-in-from-right duration-500 ease-out border-l border-gray-100 dark:border-gray-700">
+            <div className="w-full sm:w-[450px] bg-white dark:bg-gray-800 shadow-2xl flex flex-col pointer-events-auto h-full animate-in slide-in-from-right duration-500 ease-out border-l border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between px-4 py-6 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Keranjang Belanja</h2>
                 <button onClick={() => setCartOpen(false)} className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
