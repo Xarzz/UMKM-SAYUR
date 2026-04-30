@@ -124,9 +124,10 @@ export default function Navbar() {
                 <div className="w-12 h-12 shrink-0">
                   <img src="/logo/wss.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <span className="font-bold text-lg sm:text-xl tracking-tight text-emerald-900 dark:text-white">
-                  Warung Sayur <span className="text-emerald-500">Segar Malang</span>
-                </span>
+                <div className="flex flex-col sm:flex-row sm:gap-1 leading-tight sm:leading-normal">
+                  <span className="font-bold text-base sm:text-xl tracking-tight text-emerald-900 dark:text-white">Warung Sayur</span>
+                  <span className="font-bold text-sm sm:text-xl tracking-tight text-emerald-500">Segar Malang</span>
+                </div>
               </Link>
             </div>
             
