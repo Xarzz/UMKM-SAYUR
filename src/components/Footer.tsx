@@ -1,43 +1,12 @@
 "use client";
 
-import { MapPin, X, Clock, ShoppingBag } from "lucide-react";
+import { MapPin, X, Clock, ShoppingBag, MessageCircle, Phone, Mail } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-// Kategori default agar tidak kosong saat loading/error
-const DEFAULT_CATEGORIES = [
-  { id: 1, name: "Sayur Daun" },
-  { id: 2, name: "Umbi-umbian" },
-  { id: 3, name: "Bumbu Dapur" },
-  { id: 4, name: "Buah Segar" },
-  { id: 5, name: "Paket Masak" }
-];
+import { useState } from "react";
 
 export default function Footer() {
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [isCaraPesanOpen, setIsCaraPesanOpen] = useState(false);
   const [isJadwalOpen, setIsJadwalOpen] = useState(false);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const { data, error } = await supabase.from("categories").select("id, name").limit(5);
-        if (error) throw error;
-        if (data && data.length > 0) {
-          setCategories(data);
-        }
-      } catch (err) {
-        console.error("Footer category fetch error:", err);
-      }
-    }
-    fetchCategories();
-  }, []);
 
   return (
     <>
@@ -54,23 +23,39 @@ export default function Footer() {
                 </span>
               </div>
               <p className="text-emerald-200/80 text-sm mb-6 leading-relaxed">
-                Sayuran segar langsung dari petani lokal. Lebih sehat, lebih murah, dan memberdayakan petani UMKM.
+                Sayuran segar langsung dari petani lokal. Lebih sehat, lebih murah, dan memberdayakan petani UMKM di Malang Raya.
               </p>
+              <div className="flex gap-4">
+                <a href="https://wa.me/6281234567890" className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center hover:bg-emerald-400 hover:text-emerald-950 transition-all">
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+                <a href="tel:+6281234567890" className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center hover:bg-emerald-400 hover:text-emerald-950 transition-all">
+                  <Phone className="w-5 h-5" />
+                </a>
+                <a href="mailto:info@warungsayurmalang.com" className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center hover:bg-emerald-400 hover:text-emerald-950 transition-all">
+                  <Mail className="w-5 h-5" />
+                </a>
+              </div>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4 text-white">Kategori</h3>
+              <h3 className="font-semibold text-lg mb-4 text-white">Tautan Cepat</h3>
               <ul className="space-y-2 text-sm text-emerald-200/80">
-                {categories.map(cat => (
-                  <li key={cat.id}>
-                    <Link href={`/?category=${cat.id}#produk`} className="hover:text-emerald-400 transition-colors">
-                      {cat.name}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link href="/" className="hover:text-emerald-400 transition-colors">Beranda</Link>
+                </li>
+                <li>
+                  <Link href="/#produk" className="hover:text-emerald-400 transition-colors">Katalog Produk</Link>
+                </li>
+                <li>
+                  <Link href="/#kategori" className="hover:text-emerald-400 transition-colors">Kategori Populer</Link>
+                </li>
+                <li>
+                  <Link href="/history" className="hover:text-emerald-400 transition-colors">Riwayat Pesanan</Link>
+                </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4 text-white">Layanan</h3>
+              <h3 className="font-semibold text-lg mb-4 text-white">Bantuan</h3>
               <ul className="space-y-2 text-sm text-emerald-200/80">
                 <li>
                   <button onClick={() => setIsCaraPesanOpen(true)} className="hover:text-emerald-400 transition-colors text-left w-full">
@@ -82,6 +67,9 @@ export default function Footer() {
                     Jadwal Pengiriman
                   </button>
                 </li>
+                <li>
+                  <Link href="/login" className="hover:text-emerald-400 transition-colors">Masuk ke Akun</Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -89,13 +77,21 @@ export default function Footer() {
               <ul className="space-y-3 text-sm text-emerald-200/80">
                 <li className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-emerald-400 shrink-0" />
-                  <span>Jl. Pertanian 123, Malang, Jawa Timur</span>
+                  <span>Jl. Pertanian 123, Lowokwaru, Malang, Jawa Timur 65141</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <span>+62 812-3456-7890 (WA Only)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <span>Setiap Hari: 08:00 - 17:00</span>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-emerald-800/50 pt-8 text-center text-sm text-emerald-200/60">
-            &copy; {new Date().getFullYear()} Warung Sayur Segar Malang. All rights reserved.
+            &copy; {new Date().getFullYear()} Warung Sayur Segar Malang. Terdaftar sebagai mitra UMKM binaan lokal.
           </div>
         </div>
       </footer>
@@ -163,3 +159,4 @@ export default function Footer() {
     </>
   );
 }
+

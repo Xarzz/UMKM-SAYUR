@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { sbGet } from "@/lib/api";
 import { Star, Truck, Banknote, Tag, List, ChefHat, Plus, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,13 +18,13 @@ export default async function Home({
   // IMPORTANT: In Next.js 15+, searchParams is a Promise and must be awaited
   const params = await searchParams;
 
-  // Fetch logic from Supabase
+  // Fetch logic from Supabase REST API
   let products: any[] = [];
   let categories: any[] = [];
 
   try {
-    const { data: catData } = await supabase.from("categories").select("*");
-    const { data: prodsCount } = await supabase.from("products").select("category_id");
+    const catData = await sbGet("categories", "select=*");
+    const prodsCount = await sbGet("products", "select=category_id");
     
     // Count products per category
     const counts: Record<number, number> = {};
@@ -34,27 +34,26 @@ export default async function Home({
       }
     });
 
-    categories = (catData || []).map(cat => ({
+    categories = (catData || []).map((cat: any) => ({
       ...cat,
       count: counts[cat.id] || 0
     }));
 
-    let query = supabase.from("products").select("*, category:categories(*)");
+    // Build query string for products
+    let queryParts = ["select=*,category:categories(*)"];
+    if (params.category) queryParts.push(`category_id=eq.${params.category}`);
+    if (params.max_price) queryParts.push(`price=lte.${params.max_price}`);
+    if (params.is_fresh) queryParts.push(`is_fresh=eq.true`);
+    if (params.is_promo) queryParts.push(`discount_percentage=gt.0`);
+    if (params.is_new) queryParts.push(`is_new=eq.true`);
+    if (params.limited_stock) queryParts.push(`limited_stock=eq.true`);
+    if (params.search) queryParts.push(`name=ilike.*${params.search}*`);
+    queryParts.push("order=created_at.desc");
 
-    if (params.category) query = query.eq("category_id", params.category);
-    if (params.max_price) query = query.lte("price", params.max_price);
-    if (params.is_fresh) query = query.eq("is_fresh", true);
-    if (params.is_promo) query = query.gt("discount_percentage", 0);
-    if (params.is_new) query = query.eq("is_new", true);
-    if (params.limited_stock) query = query.eq("limited_stock", true);
-    if (params.search) {
-      query = query.ilike("name", `%${params.search}%`);
-    }
-
-    const { data: prodData } = await query.order("created_at", { ascending: false });
+    const prodData = await sbGet("products", queryParts.join("&"));
     products = prodData || [];
   } catch (error) {
-    console.error("Supabase fetch error:", error);
+    console.error("Fetch error:", error);
   }
 
   return (

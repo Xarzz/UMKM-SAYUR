@@ -10,7 +10,7 @@ export default function Toast() {
 
   return (
     <div
-      className="fixed bottom-24 right-6 max-w-sm w-full bg-white dark:bg-gray-800 shadow-lg dark:shadow-gray-900/50 rounded-xl pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden z-50 border border-emerald-100 dark:border-emerald-900/50 transition-all duration-300"
+      className="fixed bottom-24 right-6 max-w-sm w-full bg-white dark:bg-gray-800 shadow-xl dark:shadow-gray-900/50 rounded-2xl pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden z-[110] border border-emerald-100 dark:border-emerald-900/50 animate-in slide-in-from-bottom-5 fade-in duration-300"
     >
       <div className="p-4">
         <div className="flex items-start">

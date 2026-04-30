@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { sbGet } from "@/lib/api";
 import { ShoppingBag, Box, Users, Wallet } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -17,8 +17,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const { data: products } = await supabase.from("products").select("id");
-        const { data: orders } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+        const products = await sbGet("products", "select=id");
+        const orders = await sbGet("orders", "select=*&order=created_at.desc");
 
         const allOrders = orders || [];
         const uniqueCustomers = new Set(allOrders.map((o: any) => o.customer_name)).size;
@@ -76,9 +76,36 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
-      </div>
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 animate-pulse">
+              <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
+              <div className="flex-1">
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-20 mb-3"></div>
+                <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-full w-28"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden animate-pulse">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-40"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-24"></div>
+          </div>
+          <div className="p-4 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-32"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-24 ml-auto"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -114,7 +141,7 @@ export default function AdminDashboard() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold">
+            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold text-center">
               <tr>
                 <th className="px-6 py-4">ID Pesanan</th>
                 <th className="px-6 py-4">Pelanggan</th>

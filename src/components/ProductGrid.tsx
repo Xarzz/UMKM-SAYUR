@@ -37,8 +37,10 @@ export default function ProductGrid({ products }: { products: Product[] }) {
 
   const getFirstImage = (imagesStr: string) => {
     try {
+      if (!imagesStr) return "https://via.placeholder.com/300";
       const images = JSON.parse(imagesStr);
-      return Array.isArray(images) ? images[0] : images;
+      const img = Array.isArray(images) ? images[0] : images;
+      return img || "https://via.placeholder.com/300";
     } catch (e) {
       return "https://via.placeholder.com/300";
     }

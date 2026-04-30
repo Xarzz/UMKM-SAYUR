@@ -29,10 +29,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [profile, loading, router, pathname]);
 
+  useEffect(() => {
+    const dark = document.documentElement.classList.contains("dark");
+    setIsDark(dark);
+  }, []);
+
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-emerald-600">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-current"></div>
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden animate-pulse">
+        {/* Sidebar Skeleton */}
+        <div className="hidden lg:flex w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col">
+          <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0"></div>
+            <div className="ml-3 space-y-2 flex-1">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+            </div>
+          </div>
+          <div className="p-4 space-y-4 mt-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-2">
+                <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content Skeleton */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4">
+            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="flex gap-4 items-center">
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            </div>
+          </div>
+          <div className="p-4 lg:p-8 flex-1">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+              ))}
+            </div>
+            <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -40,11 +82,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (profile?.role !== "admin") {
     return null;
   }
-
-  useEffect(() => {
-    const dark = document.documentElement.classList.contains("dark");
-    setIsDark(dark);
-  }, []);
 
   const toggleDark = () => {
     const newMode = !isDark;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { sbGet, sbUpdate } from "@/lib/api";
 import { X, Save, ArrowLeft } from "lucide-react";
 
 export default function AdminOrders() {
@@ -19,28 +19,40 @@ export default function AdminOrders() {
 
   async function fetchOrders() {
     setLoading(true);
-    const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-    setOrders(data || []);
+    try {
+      const data = await sbGet("orders", "select=*&order=created_at.desc");
+      setOrders(data || []);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+    }
     setLoading(false);
   }
 
   const openDetail = async (order: any) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
-    // Fetch order items
-    const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
-    setOrderItems(data || []);
+    try {
+      const data = await sbGet("order_items", `select=*&order_id=eq.${order.id}`);
+      setOrderItems(data || []);
+    } catch (err) {
+      console.error("Fetch order items error:", err);
+      setOrderItems([]);
+    }
   };
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder) return;
     setSaving(true);
-    await supabase.from("orders").update({ status: newStatus }).eq("id", selectedOrder.id);
+    try {
+      await sbUpdate("orders", selectedOrder.id, { status: newStatus });
+      setSuccessMsg("Status pesanan berhasil diperbarui!");
+      setTimeout(() => setSuccessMsg(""), 3000);
+      setSelectedOrder(null);
+      fetchOrders();
+    } catch (err) {
+      console.error("Update status error:", err);
+    }
     setSaving(false);
-    setSuccessMsg("Status pesanan berhasil diperbarui!");
-    setTimeout(() => setSuccessMsg(""), 3000);
-    setSelectedOrder(null);
-    fetchOrders();
   };
 
   const formatRupiah = (n: number) =>
@@ -76,8 +88,17 @@ export default function AdminOrders() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden animate-pulse">
+        <div className="p-4 space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-24"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-32"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-20 ml-auto"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -156,7 +177,7 @@ export default function AdminOrders() {
   return (
     <>
       {successMsg && (
-        <div className="mb-4 bg-emerald-100 border border-emerald-200 text-emerald-700 px-4 py-3 rounded relative">
+        <div className="mb-4 bg-emerald-100 border border-emerald-200 text-emerald-700 px-4 py-3 rounded relative animate-in fade-in slide-in-from-top-2 duration-300">
           {successMsg}
         </div>
       )}
@@ -164,14 +185,14 @@ export default function AdminOrders() {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold">
+            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold text-center">
               <tr>
                 <th className="px-6 py-4">Nomor Pesanan</th>
                 <th className="px-6 py-4">Pelanggan</th>
                 <th className="px-6 py-4">Total Harga</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
+                <th className="px-6 py-4">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -186,7 +207,7 @@ export default function AdminOrders() {
                     </span>
                   </td>
                   <td className="px-6 py-4">{formatDate(order.created_at)}</td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4">
                     <button
                       onClick={() => openDetail(order)}
                       className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg text-xs font-bold transition-colors"

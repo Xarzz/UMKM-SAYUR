@@ -22,6 +22,7 @@ interface CartContextType {
   toastMsg: string;
   toastOpen: boolean;
   setToastOpen: (open: boolean) => void;
+  clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -89,6 +90,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const cartTotal = cartItems.reduce(
     (total, item) => total + item.price * item.qty,
     0
@@ -108,6 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         toastMsg,
         toastOpen,
         setToastOpen,
+        clearCart,
       }}
     >
       {children}

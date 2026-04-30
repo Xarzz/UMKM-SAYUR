@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, MapPin, Truck, Wallet, CheckCircle, ShoppingBag, ArrowLeft } from "lucide-react";
+import { ChevronRight, MapPin, Wallet, CheckCircle, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, cartTotal, totalItems } = useCart();
-  
-  const { user, profile, loading: authLoading } = useAuth();
+  const { cartItems, cartTotal, totalItems, clearCart } = useCart();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -20,26 +20,6 @@ export default function CheckoutPage() {
     customer_address: "",
     payment_method: "bank_transfer",
   });
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login?redirect=/checkout");
-    } else if (user) {
-      setFormData(prev => ({
-        ...prev,
-        customer_name: profile?.full_name || user.user_metadata?.full_name || "",
-        customer_email: user.email || ""
-      }));
-    }
-  }, [user, profile, authLoading, router]);
-
-  if (authLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-    </div>
-  );
-
-  if (!user) return null; // Cegah render halaman sebelum redirect selesai
 
   const grandTotal = cartTotal;
 
@@ -56,30 +36,97 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // WhatsApp logic as in the original project
-    let message = `*PESANAN BARU - WARUNG SAYUR SEGAR MALANG*%0A%0A`;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    const orderNumber = `WSS-${Date.now().toString().slice(-6)}`;
+    const phone = "6282232415842";
+
+    // Build WA message
+    let message = `*PESANAN BARU - ${orderNumber}*%0A%0A`;
     message += `*Data Penerima:*%0A`;
     message += `- Nama: ${formData.customer_name}%0A`;
     message += `- Email: ${formData.customer_email}%0A`;
     message += `- WA: ${formData.customer_phone}%0A`;
     message += `- Alamat: ${formData.customer_address}%0A%0A`;
-    
     message += `*Daftar Belanja:*%0A`;
     cartItems.forEach((item, index) => {
       message += `${index + 1}. ${item.name} (${item.qty}x) - ${formatRupiah(item.price * item.qty)}%0A`;
     });
-    
     message += `%0A*Rincian:*%0A`;
     message += `- Subtotal: ${formatRupiah(cartTotal)}%0A`;
     message += `*Total Tagihan: ${formatRupiah(grandTotal)}*%0A%0A`;
     message += `*Metode Bayar:* ${formData.payment_method === 'bank_transfer' ? 'Transfer Bank' : 'COD'}%0A%0A`;
     message += `Mohon segera diproses ya Min. Terima kasih!`;
 
-    const phone = "6282232415842"; // Admin phone baru
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // Save order to database using fetch (bypass supabase-js)
+    if (url && key) {
+      try {
+        const orderPayload: any = {
+          order_number: orderNumber,
+          customer_name: formData.customer_name,
+          customer_phone: formData.customer_phone,
+          customer_address: formData.customer_address,
+          grand_total: Math.round(grandTotal),
+          status: "pending",
+        };
+
+        // Include user_id if user is logged in
+        if (user?.id) {
+          orderPayload.user_id = user.id;
+        }
+
+        const orderRes = await fetch(`${url}/rest/v1/orders`, {
+          method: "POST",
+          headers: {
+            "apikey": key,
+            "Authorization": `Bearer ${key}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+          },
+          body: JSON.stringify(orderPayload),
+        });
+
+        if (orderRes.ok) {
+          const [orderData] = await orderRes.json();
+
+          // Save order items
+          const itemsPayload = cartItems.map(item => ({
+            order_id: orderData.id,
+            product_name: item.name,
+            quantity: item.qty,
+            price: Math.round(item.price),
+            subtotal: Math.round(item.price * item.qty),
+          }));
+
+          await fetch(`${url}/rest/v1/order_items`, {
+            method: "POST",
+            headers: {
+              "apikey": key,
+              "Authorization": `Bearer ${key}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(itemsPayload),
+          });
+        } else {
+          const errText = await orderRes.text();
+          console.error("Order save failed:", orderRes.status, errText);
+        }
+      } catch (err) {
+        console.error("DB save error (WA still opens):", err);
+      }
+    }
+
+    // Always: clear cart + open WA
+    clearCart();
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+    router.push("/history");
+    setIsSubmitting(false);
   };
 
   if (totalItems === 0) {
@@ -253,9 +300,19 @@ export default function CheckoutPage() {
                 <button 
                   type="submit" 
                   form="checkout-form"
-                  className="w-full flex justify-center items-center gap-2 rounded-xl border border-transparent bg-emerald-600 px-4 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 transition-all"
+                  disabled={isSubmitting}
+                  className="w-full flex justify-center items-center gap-2 rounded-xl border border-transparent bg-emerald-600 px-4 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 transition-all disabled:opacity-70"
                 >
-                  <CheckCircle className="w-5 h-5" /> Bayar Sekarang
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" /> Pesan via WhatsApp
+                    </>
+                  )}
                 </button>
               </div>
             </div>

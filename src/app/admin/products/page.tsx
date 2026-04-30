@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Plus, Pencil, Trash2, Search, X, Save, Image as ImageIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { sbGet, sbInsert, sbUpdate, sbDelete, sbUploadImage } from "@/lib/api";
+import { Plus, Pencil, Trash2, Search, X, Save, Image as ImageIcon, Upload, Loader2 } from "lucide-react";
 
 interface Product {
   id?: number;
@@ -43,6 +43,35 @@ export default function AdminProducts() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file
+    if (!file.type.startsWith("image/")) {
+      alert("File harus berupa gambar (jpg, png, webp, dll.)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ukuran file maksimal 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const url = await sbUploadImage(file);
+      setImageUrl(url);
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      alert("Gagal upload gambar: " + (err?.message || "Unknown error"));
+    }
+    setUploading(false);
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   useEffect(() => {
     fetchData();
@@ -50,10 +79,14 @@ export default function AdminProducts() {
 
   async function fetchData() {
     setLoading(true);
-    const { data: prods } = await supabase.from("products").select("*, category:categories(*)").order("created_at", { ascending: false });
-    const { data: cats } = await supabase.from("categories").select("*");
-    setProducts(prods || []);
-    setCategories(cats || []);
+    try {
+      const prods = await sbGet("products", "select=*,category:categories(*)&order=created_at.desc");
+      const cats = await sbGet("categories", "select=*");
+      setProducts(prods || []);
+      setCategories(cats || []);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
     setLoading(false);
   }
 
@@ -91,8 +124,12 @@ export default function AdminProducts() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Yakin ingin menghapus produk ini?")) return;
-    await supabase.from("products").delete().eq("id", id);
-    fetchData();
+    try {
+      await sbDelete("products", id);
+      fetchData();
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
 
   const handleSave = async () => {
@@ -103,14 +140,18 @@ export default function AdminProducts() {
     };
     delete (data as any).id;
 
-    if (isEditing && editingProduct.id) {
-      await supabase.from("products").update(data).eq("id", editingProduct.id);
-    } else {
-      await supabase.from("products").insert(data);
+    try {
+      if (isEditing && editingProduct.id) {
+        await sbUpdate("products", editingProduct.id, data);
+      } else {
+        await sbInsert("products", data);
+      }
+      setShowModal(false);
+      fetchData();
+    } catch (err) {
+      console.error("Save error:", err);
     }
     setSaving(false);
-    setShowModal(false);
-    fetchData();
   };
 
   const formatRupiah = (n: number) =>
@@ -156,8 +197,24 @@ export default function AdminProducts() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex items-center justify-center h-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden animate-pulse">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-32"></div>
+          </div>
+          <div className="p-4 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-6">
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-1/3"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-1/4"></div>
+                </div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-24"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
@@ -166,7 +223,7 @@ export default function AdminProducts() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-              <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold">
+              <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 uppercase text-xs font-bold text-center">
                 <tr>
                   <th className="px-6 py-4">Foto</th>
                   <th className="px-6 py-4">Nama Produk</th>
@@ -242,10 +299,10 @@ export default function AdminProducts() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal with backdrop click-outside */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
+          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-gray-800">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {isEditing ? "Edit Produk" : "Tambah Produk Baru"}
@@ -256,21 +313,70 @@ export default function AdminProducts() {
             </div>
 
             <div className="p-6 space-y-5">
-              {/* Image Preview */}
+              {/* Image Upload & Preview */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URL Gambar Produk</label>
-                <div className="flex gap-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gambar Produk</label>
+                
+                {/* Preview */}
+                {imageUrl ? (
+                  <div className="relative w-40 h-40 mb-3 group">
+                    <img src={imageUrl} alt="Preview" className="w-full h-full rounded-2xl object-cover border-2 border-gray-200 dark:border-gray-700 shadow-sm" />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-40 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-all mb-3"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-2" />
+                        <p className="text-sm text-gray-500">Mengupload...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Klik untuk upload gambar</p>
+                        <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — Maks 5MB</p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+
+                {/* Upload button + URL fallback */}
+                <div className="flex gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {uploading ? "Mengupload..." : "Upload Gambar"}
+                  </button>
+                  <span className="text-xs text-gray-400">atau</span>
                   <input
                     type="url"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    placeholder="Tempel URL gambar..."
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
-                {imageUrl && (
-                  <img src={imageUrl} alt="Preview" className="mt-3 w-32 h-32 rounded-xl object-cover border border-gray-200 dark:border-gray-700" />
-                )}
               </div>
 
               {/* Name & Weight */}
@@ -303,9 +409,9 @@ export default function AdminProducts() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Harga (Rp)</label>
                   <input
                     type="number"
-                    value={editingProduct.price}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    value={editingProduct.price === 0 ? "" : editingProduct.price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value ? Number(e.target.value) : 0 })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
                 <div>
@@ -314,9 +420,9 @@ export default function AdminProducts() {
                     type="number"
                     min="0"
                     max="100"
-                    value={editingProduct.discount_percentage}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, discount_percentage: Number(e.target.value) })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    value={editingProduct.discount_percentage === 0 ? "" : editingProduct.discount_percentage}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, discount_percentage: e.target.value ? Number(e.target.value) : 0 })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
                 <div>
@@ -326,9 +432,9 @@ export default function AdminProducts() {
                     min="0"
                     max="5"
                     step="0.1"
-                    value={editingProduct.rating}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, rating: Number(e.target.value) })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    value={editingProduct.rating === 0 ? "" : editingProduct.rating}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, rating: e.target.value ? Number(e.target.value) : 0 })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
               </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { sbGet, sbInsert, sbUpdate, sbDelete } from "@/lib/api";
 import { Plus, Pencil, Trash2, X, Save, Tag } from "lucide-react";
 
 export default function AdminCategories() {
@@ -19,19 +19,23 @@ export default function AdminCategories() {
 
   async function fetchData() {
     setLoading(true);
-    const { data: cats } = await supabase.from("categories").select("*").order("id");
-    const { data: prods } = await supabase.from("products").select("category_id");
+    try {
+      const cats = await sbGet("categories", "select=*&order=id");
+      const prods = await sbGet("products", "select=category_id");
 
-    // Count products per category
-    const counts: Record<number, number> = {};
-    (prods || []).forEach((p: any) => {
-      if (p.category_id) {
-        counts[p.category_id] = (counts[p.category_id] || 0) + 1;
-      }
-    });
+      // Count products per category
+      const counts: Record<number, number> = {};
+      (prods || []).forEach((p: any) => {
+        if (p.category_id) {
+          counts[p.category_id] = (counts[p.category_id] || 0) + 1;
+        }
+      });
 
-    setCategories(cats || []);
-    setProductCounts(counts);
+      setCategories(cats || []);
+      setProductCounts(counts);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
     setLoading(false);
   }
 
@@ -53,23 +57,30 @@ export default function AdminCategories() {
       return;
     }
     if (!confirm("Yakin ingin menghapus kategori ini?")) return;
-    await supabase.from("categories").delete().eq("id", id);
-    fetchData();
+    try {
+      await sbDelete("categories", id);
+      fetchData();
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
 
   const handleSave = async () => {
     if (!editingCat.name.trim()) return;
     setSaving(true);
 
-    if (isEditing && editingCat.id) {
-      await supabase.from("categories").update({ name: editingCat.name.trim() }).eq("id", editingCat.id);
-    } else {
-      await supabase.from("categories").insert({ name: editingCat.name.trim() });
+    try {
+      if (isEditing && editingCat.id) {
+        await sbUpdate("categories", editingCat.id, { name: editingCat.name.trim() });
+      } else {
+        await sbInsert("categories", { name: editingCat.name.trim() });
+      }
+      setShowModal(false);
+      fetchData();
+    } catch (err) {
+      console.error("Save error:", err);
     }
-
     setSaving(false);
-    setShowModal(false);
-    fetchData();
   };
 
   const colors = [
@@ -97,8 +108,18 @@ export default function AdminCategories() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-2/3"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-1/3"></div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -145,10 +166,10 @@ export default function AdminCategories() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal with backdrop click-outside */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
+          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-gray-800">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {isEditing ? "Edit Kategori" : "Tambah Kategori Baru"}

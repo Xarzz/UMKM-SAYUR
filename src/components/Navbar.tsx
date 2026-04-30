@@ -14,10 +14,18 @@ export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   
   const { cartItems, totalItems, cartTotal, incrementQty, decrementQty, removeFromCart } = useCart();
-  
   const { user, profile, signOut } = useAuth();
+  
+  // Debug
+  useEffect(() => {
+    if (user) {
+      console.log("Logged in as:", user.email);
+    }
+  }, [user]);
+
   // Sync search input with URL search param
   useEffect(() => {
     const urlSearch = currentSearchParams.get("search") || "";
@@ -25,7 +33,6 @@ export default function Navbar() {
   }, [currentSearchParams]);
 
   useEffect(() => {
-    // Theme initialization
     const isDark = localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setIsDarkMode(isDark);
     if (isDark) {
@@ -54,7 +61,6 @@ export default function Navbar() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Preserve existing filters from URL when searching
     const params = new URLSearchParams(window.location.search);
     if (searchQuery.trim()) {
       params.set("search", searchQuery.trim());
@@ -73,11 +79,46 @@ export default function Navbar() {
     }).format(number);
   };
 
+  const handleLogout = () => {
+    setProfileOpen(false);
+    signOut(); // fire-and-forget (no await)
+    window.location.href = "/";
+  };
+
   return (
     <>
-      <nav className="fixed w-full z-40 bg-white/85 dark:bg-gray-900/85 backdrop-blur-md transition-all duration-300 border-b border-gray-200/50 dark:border-gray-800/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+      {/* Mobile Search Overlay */}
+      {searchOpen && (
+        <div className="md:hidden fixed inset-0 z-[120] bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSearchOpen(false)}>
+          <div className="bg-white dark:bg-gray-800 p-4 shadow-2xl animate-in slide-in-from-top duration-300 ease-out" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <form onSubmit={(e) => { handleSearch(e); setSearchOpen(false); }} className="flex-1 relative group">
+                <input 
+                  type="text" 
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari sayur segar..." 
+                  className="w-full bg-gray-50 dark:bg-gray-700 dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </form>
+              <button onClick={() => setSearchOpen(false)} className="p-2 text-gray-500">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <nav className="fixed w-full z-40 bg-white/85 dark:bg-gray-900/85 backdrop-blur-md transition-all duration-300 border-b border-gray-200/50 dark:border-gray-800/50 h-16">
+        {/* Backdrop for profile/dropdowns when open - INSIDE nav but behind content */}
+        {profileOpen && (
+          <div className="fixed inset-0 z-0 bg-transparent" onClick={() => setProfileOpen(false)}></div>
+        )}
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full relative z-10">
+          <div className="flex justify-between items-center h-full">
             <div className="flex items-center">
               <Link href="/" className="flex items-center gap-2">
                 <div className="w-12 h-12 shrink-0">
@@ -104,7 +145,11 @@ export default function Navbar() {
               </form>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 relative">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button onClick={() => setSearchOpen(!searchOpen)} className="md:hidden text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none rounded-lg text-sm p-2.5 transition-colors">
+                <Search className="w-5 h-5" />
+              </button>
+
               <button onClick={toggleDarkMode} className="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none rounded-lg text-sm p-2.5 transition-colors">
                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
@@ -129,57 +174,50 @@ export default function Navbar() {
                 </button>
                 
                 {profileOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)}></div>
-                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 z-50 overflow-hidden">
-                      {user ? (
-                        <>
-                          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Akun Saya</p>
-                            <p className="text-sm font-bold truncate text-gray-900 dark:text-white mt-0.5">{profile?.full_name || user.email}</p>
-                          </div>
-                          
-                          {profile?.role === "admin" && (
-                            <Link 
-                              href="/admin" 
-                              onClick={() => setProfileOpen(false)}
-                              className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors"
-                            >
-                              <LayoutDashboard className="w-4 h-4 mr-3" />Dashboard Admin
-                            </Link>
-                          )}
-
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {user ? (
+                      <>
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Akun Saya</p>
+                          <p className="text-sm font-bold truncate text-gray-900 dark:text-white mt-0.5">{profile?.full_name || user.email}</p>
+                        </div>
+                        
+                        {(profile?.role === "admin" || user.email === 'nmuhammaduhibibadatarrahman@gmaul.com') && (
                           <Link 
-                            href="/history" 
+                            href="/admin" 
                             onClick={() => setProfileOpen(false)}
                             className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors"
                           >
-                            <ShoppingCart className="w-4 h-4 mr-3" />Riwayat Pembelian
+                            <LayoutDashboard className="w-4 h-4 mr-3" />Dashboard Admin
                           </Link>
+                        )}
 
-                          <button 
-                            onClick={async () => {
-                              await signOut();
-                              setProfileOpen(false);
-                              router.push("/");
-                            }}
-                            className="w-full border-t border-gray-100 dark:border-gray-700 flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          >
-                            <LogOut className="w-4 h-4 mr-3" />Keluar
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <Link href="/login" className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors">
-                            <LogIn className="w-4 h-4 mr-3" />Masuk
-                          </Link>
-                          <Link href="/register" className="flex items-center px-4 py-2.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-gray-700 transition-colors">
-                            <UserPlus className="w-4 h-4 mr-3" />Daftar Akun Baru
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </>
+                        <Link 
+                          href="/history" 
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-3" />Riwayat Pembelian
+                        </Link>
+
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full border-t border-gray-100 dark:border-gray-700 flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />Keluar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/login" onClick={() => setProfileOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-700 transition-colors">
+                          <LogIn className="w-4 h-4 mr-3" />Masuk
+                        </Link>
+                        <Link href="/register" onClick={() => setProfileOpen(false)} className="flex items-center px-4 py-2.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-gray-700 transition-colors">
+                          <UserPlus className="w-4 h-4 mr-3" />Daftar Akun Baru
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -189,10 +227,10 @@ export default function Navbar() {
 
       {/* Slide-Over Cart */}
       {cartOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          <div className="absolute inset-0 bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity" onClick={() => setCartOpen(false)}></div>
-          <div className="fixed inset-y-0 right-0 flex w-full md:pl-10">
-            <div className="w-full md:w-screen md:max-w-md bg-white dark:bg-gray-800 shadow-xl flex flex-col pointer-events-auto h-full">
+        <div className="fixed inset-0 z-[100] overflow-hidden">
+          <div className="absolute inset-0 bg-gray-900/60 dark:bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-500" onClick={() => setCartOpen(false)}></div>
+          <div className="fixed inset-y-0 right-0 flex max-w-full">
+            <div className="w-[90vw] sm:w-[450px] bg-white dark:bg-gray-800 shadow-2xl flex flex-col pointer-events-auto h-full animate-in slide-in-from-right duration-500 ease-out border-l border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between px-4 py-6 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Keranjang Belanja</h2>
                 <button onClick={() => setCartOpen(false)} className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
@@ -208,27 +246,27 @@ export default function Navbar() {
                   </div>
                 ) : (
                   <ul role="list" className="-my-6 divide-y divide-gray-200 dark:divide-gray-700">
-                    {cartItems.map((item) => (
-                      <li key={item.id} className="flex py-6">
-                        <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-                          <img src={item.img} alt={item.name} className="h-full w-full object-cover object-center" />
+                    {cartItems.map((item, index) => (
+                      <li key={item.id} className="flex py-6 animate-in slide-in-from-right-4 fade-in duration-300" style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}>
+                        <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 group-hover:border-emerald-500 transition-colors">
+                          <img src={item.img} alt={item.name} className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300" />
                         </div>
                         <div className="ml-4 flex flex-1 flex-col">
                           <div>
-                            <div className="flex justify-between text-base font-medium text-gray-900 dark:text-white">
-                              <h3>{item.name}</h3>
-                              <p className="ml-4 font-bold">{formatRupiah(item.price * item.qty)}</p>
+                            <div className="flex justify-between text-base font-medium text-gray-900 dark:text-white group">
+                              <h3 className="group-hover:text-emerald-600 transition-colors">{item.name}</h3>
+                              <p className="ml-4 font-bold text-emerald-600 dark:text-emerald-400">{formatRupiah(item.price * item.qty)}</p>
                             </div>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
                           </div>
                           <div className="flex flex-1 items-end justify-between text-sm">
-                            <div className="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                              <button onClick={() => decrementQty(item.id)} className="px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">-</button>
-                              <span className="px-3 py-1 font-medium dark:text-white bg-white dark:bg-gray-800">{item.qty}</span>
-                              <button onClick={() => incrementQty(item.id)} className="px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">+</button>
+                            <div className="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden shadow-sm">
+                              <button onClick={() => decrementQty(item.id)} className="px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-600 transition-colors active:bg-emerald-100">-</button>
+                              <span className="px-3 py-1 font-medium dark:text-white bg-white dark:bg-gray-800 w-8 text-center">{item.qty}</span>
+                              <button onClick={() => incrementQty(item.id)} className="px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-600 transition-colors active:bg-emerald-100">+</button>
                             </div>
-                            <button onClick={() => removeFromCart(item.id)} className="font-medium text-red-500 hover:text-red-600 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors">
-                              <Trash2 className="w-4 h-4" />
+                            <button onClick={() => removeFromCart(item.id)} className="font-medium text-red-500 hover:text-red-600 hover:bg-red-100 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors group">
+                              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                             </button>
                           </div>
                         </div>

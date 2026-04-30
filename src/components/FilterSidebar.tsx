@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { List, Banknote, Tag, Truck, ChevronDown, SlidersHorizontal } from "lucide-react";
 
@@ -18,6 +18,22 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node) && window.innerWidth < 1024) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
   
   const [maxPrice, setMaxPrice] = useState(searchParams.max_price || 200000);
   const [localCategory, setLocalCategory] = useState(searchParams.category || "");
@@ -87,8 +103,9 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
         <ChevronDown className={`w-5 h-5 transition-transform text-gray-400 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Filter Form */}
-      <div className={`${isOpen ? 'block' : 'hidden'} lg:block bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 sticky top-24 transition-colors`}>
+      {/* Filter Content with Backdrop on Mobile */}
+      <div className={`${isOpen ? 'block' : 'hidden'} lg:block relative z-30`} ref={sidebarRef}>
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl lg:shadow-sm border border-gray-100 dark:border-gray-700 sticky top-24 transition-all duration-300 animate-in fade-in slide-in-from-top-4 lg:animate-none lg:slide-in-none lg:fade-in-none">
         <div className="mb-6">
           <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <List className="w-5 h-5 text-emerald-500" /> Kategori Lengkap
@@ -189,6 +206,7 @@ export default function FilterSidebar({ categories, searchParams }: FilterSideba
           Hapus Semua Filter
         </button>
       </div>
+    </div>
     </aside>
   );
 }
